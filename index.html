@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SuperAdmin · Grupo Zoalum SaaS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f8fafc; }
+    /* Toast Alert */
+    #toast { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    #toast.show { transform: translateX(0) !important; }
+  </style>
+</head>
+<body class="overflow-hidden flex flex-col h-screen">
+
+  <!-- ▌TOAST NOTIFICATIONS ▐ -->
+  <div id="toast" class="fixed top-4 right-4 z-[300] transform translate-x-[130%] max-w-sm">
+    <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border bg-white">
+      <i id="toastIcon" class="text-lg w-5 text-center shrink-0"></i>
+      <p id="toastMsg" class="text-sm font-medium text-slate-800 flex-1"></p>
+    </div>
+  </div>
+
+  <!-- ▌NAVBAR ▐ -->
+  <nav class="h-16 bg-slate-900 text-white flex items-center justify-between px-6 shadow-md shrink-0 z-40">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+        <i class="fa-solid fa-server text-sm"></i>
+      </div>
+      <span class="font-bold text-lg tracking-tight">SaaS Manager</span>
+      <span class="text-[10px] bg-slate-800 border border-slate-700 px-2 py-0.5 rounded-full text-slate-300">SuperAdmin</span>
+    </div>
+    <div id="navUserArea" class="hidden flex items-center gap-4">
+      <span id="navUserName" class="text-sm font-medium text-slate-300"></span>
+      <button onclick="logout()" class="text-slate-400 hover:text-white transition" title="Cerrar sesión">
+        <i class="fa-solid fa-right-from-bracket text-lg"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ▌MAIN CONTENT ▐ -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col shadow-sm z-10">
+      <div class="p-4">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Gestión</p>
+        <button class="w-full flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-semibold transition">
+          <i class="fa-solid fa-building w-4 text-center"></i> Negocios (Tenants)
+        </button>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="flex-1 overflow-y-auto p-6 md:p-8 relative">
+      <!-- Muro de Login para SuperAdmin -->
+      <div id="loginScreen" class="absolute inset-0 bg-slate-100 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm border border-slate-200">
+          <div class="text-center mb-6">
+            <i class="fa-solid fa-shield-halved text-4xl text-indigo-600 mb-3"></i>
+            <h2 class="text-2xl font-black text-slate-800">Acceso Admin</h2>
+            <p class="text-slate-500 text-sm mt-1">Control maestro del SaaS</p>
+          </div>
+          <div class="space-y-4">
+            <input id="loginEmail" type="email" placeholder="Correo electrónico" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input id="loginPwd" type="password" placeholder="Contraseña" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button onclick="doLogin()" id="loginBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold transition">
+              Entrar al Panel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido del Panel -->
+      <div id="adminDashboard" class="hidden max-w-6xl mx-auto">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-black text-slate-800">Negocios Activos</h1>
+            <p class="text-slate-500 text-sm mt-1">Controla las suscripciones y accesos de tus clientes.</p>
+          </div>
+          <button onclick="showNewBusinessModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Registrar Cliente
+          </button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-sm font-semibold text-slate-500 mb-1">Total Clientes</p>
+            <p id="kpiTotal" class="text-3xl font-black text-slate-800">0</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-emerald-200 bg-emerald-50 shadow-sm">
+            <p class="text-sm font-semibold text-emerald-700 mb-1">MRR Proyectado (Mensual)</p>
+            <p id="kpiMRR" class="text-3xl font-black text-emerald-600">$0</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-rose-200 bg-rose-50 shadow-sm">
+            <p class="text-sm font-semibold text-rose-700 mb-1">Suscripciones Suspendidas</p>
+            <p id="kpiSuspended" class="text-3xl font-black text-rose-600">0</p>
+          </div>
+        </div>
+
+        <!-- Tabla de Negocios -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                <tr>
+                  <th class="px-6 py-4 font-semibold">Tenant ID / Negocio</th>
+                  <th class="px-6 py-4 font-semibold">Dueño (Admin del negocio)</th>
+                  <th class="px-6 py-4 font-semibold">Plan</th>
+                  <th class="px-6 py-4 font-semibold text-center">Estado Pago</th>
+                  <th class="px-6 py-4 font-semibold text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="businessesTableBody" class="divide-y divide-slate-100">
+                <tr><td colspan="5" class="text-center py-10 text-slate-400">Cargando clientes...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ▌MODAL NUEVO NEGOCIO ▐ -->
+  <div id="newBusinessModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-lg">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-black text-slate-800">Nuevo Cliente SaaS</h3>
+        <button onclick="hideNewBusinessModal()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre del Negocio (Boutique, Barbería...)</label>
+          <input id="nb_businessName" type="text" placeholder="Ej: Barbería El Jefe" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Mensualidad (MXN)</label>
+            <input id="nb_planPrice" type="number" value="500" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm font-bold text-indigo-700 bg-indigo-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Estado Inicial</label>
+            <select id="nb_status" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="activo">Pagado (Activo)</option>
+              <option value="suspendido">Moroso (Suspendido)</option>
+            </select>
+          </div>
+        </div>
+        <div class="border-t border-slate-200 my-4 pt-4">
+          <p class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-user-tie text-indigo-500 mr-1"></i> Cuenta del Dueño</p>
+          <div class="space-y-3">
+            <input id="nb_ownerEmail" type="email" placeholder="Correo electrónico del cliente" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input id="nb_ownerPwd" type="text" placeholder="Contraseña temporal (Ej: Jefe1234)" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <p class="text-[11px] text-slate-400 mt-2">Se creará una cuenta de Firebase Auth automáticamente para este dueño y se vinculará a su nuevo negocio.</p>
+        </div>
+        <button id="saveBusinessBtn" onclick="createBusiness()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-bold transition mt-2">
+          <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Desplegar Entorno
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // 1. Configuración de la base de datos (saas-fa00f)
+    const firebaseConfig = {
+      apiKey: "AIzaSyApjuFDv4F4-tHG_taxbmgBrkYrFRFlCo4",
+      authDomain: "saas-fa00f.firebaseapp.com",
+      projectId: "saas-fa00f",
+      storageBucket: "saas-fa00f.firebasestorage.app",
+      messagingSenderId: "783638109709",
+      appId: "1:783638109709:web:d0cf49849771e48a227f44",
+      measurementId: "G-C2V3JD3DXF"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let businesses = [];
+    let unsubBusinesses = null;
+
+    // 2. Control de Sesión del Super Admin
+    onAuthStateChanged(auth, (user) => {
+      const loginScreen = document.getElementById('loginScreen');
+      const adminDashboard = document.getElementById('adminDashboard');
+      const userArea = document.getElementById('navUserArea');
+
+      if (user) {
+        // En un sistema de producción, aquí verificarías si user.uid es realmente tu UID de SuperAdmin
+        loginScreen.classList.add('hidden');
+        adminDashboard.classList.remove('hidden');
+        userArea.classList.remove('hidden');
+        userArea.classList.add('flex');
+        document.getElementById('navUserName').textContent = user.email;
+        
+        loadBusinesses();
+      } else {
+        loginScreen.classList.remove('hidden');
+        adminDashboard.classList.add('hidden');
+        userArea.classList.add('hidden');
+        userArea.classList.remove('flex');
+        if(unsubBusinesses) unsubBusinesses();
+      }
+    });
+
+    window.doLogin = async () => {
+      const e = document.getElementById('loginEmail').value;
+      const p = document.getElementById('loginPwd').value;
+      const btn = document.getElementById('loginBtn');
+      if(!e || !p) { showToast("Ingresa credenciales", "error"); return; }
+      
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando...';
+      try {
+        await signInWithEmailAndPassword(auth, e, p);
+        showToast("Acceso concedido", "success");
+      } catch (error) {
+        showToast("Error de acceso: " + error.message, "error");
+      } finally {
+        btn.innerHTML = 'Entrar al Panel';
+      }
+    };
+
+    window.logout = async () => await signOut(auth);
+
+    // 3. Cargar Negocios en Tiempo Real
+    function loadBusinesses() {
+      const negociosRef = collection(db, "negocios");
+      unsubBusinesses = onSnapshot(negociosRef, (snapshot) => {
+        businesses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderBusinesses();
+      }, (error) => {
+        console.error("Error cargando negocios: ", error);
+        showToast("Error de permisos al leer negocios", "error");
+      });
+    }
+
+    function renderBusinesses() {
+      const tbody = document.getElementById('businessesTableBody');
+      let activeCount = 0;
+      let suspendedCount = 0;
+      let mrr = 0;
+
+      if (!businesses.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400">No tienes clientes registrados aún.</td></tr>';
+      } else {
+        tbody.innerHTML = businesses.map(b => {
+          const isActive = b.status_pago === 'activo';
+          if(isActive) {
+            activeCount++;
+            mrr += parseFloat(b.mensualidad || 0);
+          } else {
+            suspendedCount++;
+          }
+
+          const statusBadge = isActive 
+            ? `<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-check mr-1"></i> Activo</span>`
+            : `<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-lock mr-1"></i> Suspendido</span>`;
+
+          return `
+            <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
+              <td class="px-6 py-4">
+                <p class="font-bold text-slate-800">${b.nombre}</p>
+                <p class="text-[10px] text-slate-400 font-mono mt-0.5">${b.id}</p>
+              </td>
+              <td class="px-6 py-4 text-sm text-slate-600">${b.ownerEmail}</td>
+              <td class="px-6 py-4 text-sm font-semibold text-indigo-600">$${b.mensualidad} MXN</td>
+              <td class="px-6 py-4 text-center">${statusBadge}</td>
+              <td class="px-6 py-4 text-right">
+                <button onclick="togglePaymentStatus('${b.id}', '${b.status_pago}')" class="text-sm px-3 py-1.5 rounded-lg font-semibold transition ${isActive ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'}">
+                  ${isActive ? 'Suspender' : 'Reactivar'}
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Actualizar KPIs
+      document.getElementById('kpiTotal').textContent = businesses.length;
+      document.getElementById('kpiSuspended').textContent = suspendedCount;
+      document.getElementById('kpiMRR').textContent = `$${mrr.toLocaleString('es-MX')}`;
+    }
+
+    // 4. Crear Negocio (Tenant) y Usuario Dueño vía REST API
+    window.showNewBusinessModal = () => {
+      document.getElementById('nb_businessName').value = '';
+      document.getElementById('nb_ownerEmail').value = '';
+      document.getElementById('nb_ownerPwd').value = '';
+      document.getElementById('newBusinessModal').classList.remove('hidden');
+    }
+    
+    window.hideNewBusinessModal = () => document.getElementById('newBusinessModal').classList.add('hidden');
+
+    window.createBusiness = async () => {
+      const bName = document.getElementById('nb_businessName').value.trim();
+      const mensualidad = document.getElementById('nb_planPrice').value;
+      const status = document.getElementById('nb_status').value;
+      const email = document.getElementById('nb_ownerEmail').value.trim();
+      const pwd = document.getElementById('nb_ownerPwd').value;
+      const btn = document.getElementById('saveBusinessBtn');
+
+      if(!bName || !email || !pwd) { showToast("Completa todos los campos", "warning"); return; }
+      if(pwd.length < 6) { showToast("La contraseña debe tener al menos 6 caracteres", "warning"); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Desplegando Entorno...';
+
+      try {
+        // A. Crear cuenta en Firebase Auth usando REST API (Evita que el SuperAdmin se desloguee)
+        const r1 = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({email: email, password: pwd, returnSecureToken:true})
+        });
+        const d1 = await r1.json();
+        if(d1.error) throw new Error(d1.error.message);
+        
+        const ownerUid = d1.localId; // El UID del nuevo dueño
+
+        // B. Generar un Tenant ID amigable pero único (Ej: barberia_eljefe_xyz)
+        const safeName = bName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').substring(0, 15);
+        const randomId = Math.random().toString(36).substring(2, 6);
+        const tenantId = `tenant_${safeName}_${randomId}`;
+
+        // C. Crear el documento del negocio en la colección raíz
+        const negocioRef = doc(db, "negocios", tenantId);
+        await setDoc(negocioRef, {
+          nombre: bName,
+          mensualidad: Number(mensualidad),
+          status_pago: status,
+          ownerUid: ownerUid,
+          ownerEmail: email,
+          createdAt: serverTimestamp()
+        });
+
+        // D. Registrar el rol y pertenencia del dueño en "usuarios_globales"
+        const globalUserRef = doc(db, "usuarios_globales", ownerUid);
+        await setDoc(globalUserRef, {
+          email: email,
+          tenantId: tenantId,
+          rol: "owner", // El dueño tiene acceso al panel de control de su propio negocio
+          createdAt: serverTimestamp()
+        });
+
+        // E. (Opcional) Inicializar las colecciones del tenant para que no estén vacías
+        // Podrías crear un producto de prueba o una categoría por defecto aquí.
+
+        hideNewBusinessModal();
+        showToast("Entorno creado y dueño registrado con éxito", "success");
+
+      } catch (error) {
+        console.error(error);
+        const errMsgs = {
+          'EMAIL_EXISTS': 'El correo ya está en uso por otro negocio.',
+          'INVALID_EMAIL': 'El correo tiene formato inválido.'
+        };
+        showToast(errMsgs[error.message] || "Error: " + error.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Desplegar Entorno';
+      }
+    };
+
+    // 5. Suspender / Reactivar Servicio (Botón de Acción)
+    window.togglePaymentStatus = async (tenantId, currentStatus) => {
+      const newStatus = currentStatus === 'activo' ? 'suspendido' : 'activo';
+      const action = newStatus === 'suspendido' ? 'suspender' : 'reactivar';
+      
+      if(!confirm(`¿Estás seguro de que deseas ${action} el servicio a este negocio?`)) return;
+
+      try {
+        const negocioRef = doc(db, "negocios", tenantId);
+        await setDoc(negocioRef, { status_pago: newStatus }, { merge: true });
+        showToast(`Servicio ${newStatus} correctamente.`, "success");
+      } catch (error) {
+        showToast("Error al actualizar el estado.", "error");
+      }
+    };
+
+    // Utilidad de Toast
+    let toastTimer;
+    window.showToast = (msg, type='info') => {
+      const t = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const icon = document.getElementById('toastIcon');
+      document.getElementById('toastMsg').textContent = msg;
+      
+      const config = {
+        success: { cls: 'fa-solid fa-circle-check text-emerald-500', border: 'border-emerald-200' },
+        error: { cls: 'fa-solid fa-circle-xmark text-rose-500', border: 'border-rose-200' },
+        warning: { cls: 'fa-solid fa-triangle-exclamation text-amber-500', border: 'border-amber-200' },
+        info: { cls: 'fa-solid fa-circle-info text-indigo-500', border: 'border-indigo-200' }
+      };
+      
+      icon.className = `${config[type].cls} text-lg w-5 text-center shrink-0`;
+      inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg bg-white border-l-4 ${config[type].border}`;
+      
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+    };
+
+  </script>
+</body>
+</html>
