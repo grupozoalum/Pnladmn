@@ -8,14 +8,18 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <style>
     body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f8fafc; }
-    /* Toast Alert */
-    #toast { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    #toast { transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
     #toast.show { transform: translateX(0) !important; }
+    #drawer { transition: transform .28s ease; }
+    .drawer-open #drawerPanel { transform: translateX(0); }
+    #drawerPanel { transition: transform .28s ease; transform: translateX(100%); }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
   </style>
 </head>
 <body class="overflow-hidden flex flex-col h-screen">
 
-  <!-- ▌TOAST NOTIFICATIONS ▐ -->
+  <!-- TOAST -->
   <div id="toast" class="fixed top-4 right-4 z-[300] transform translate-x-[130%] max-w-sm">
     <div id="toastInner" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border bg-white">
       <i id="toastIcon" class="text-lg w-5 text-center shrink-0"></i>
@@ -23,98 +27,148 @@
     </div>
   </div>
 
-  <!-- ▌NAVBAR ▐ -->
-  <nav class="h-16 bg-slate-900 text-white flex items-center justify-between px-6 shadow-md shrink-0 z-40">
+  <!-- NAVBAR -->
+  <nav class="h-16 bg-slate-900 text-white flex items-center justify-between px-4 md:px-6 shadow-md shrink-0 z-40">
     <div class="flex items-center gap-3">
       <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
         <i class="fa-solid fa-server text-sm"></i>
       </div>
       <span class="font-bold text-lg tracking-tight">SaaS Manager</span>
-      <span class="text-[10px] bg-slate-800 border border-slate-700 px-2 py-0.5 rounded-full text-slate-300">SuperAdmin</span>
+      <span class="hidden sm:inline text-[10px] bg-slate-800 border border-slate-700 px-2 py-0.5 rounded-full text-slate-300">SuperAdmin</span>
     </div>
-    <div id="navUserArea" class="hidden flex items-center gap-4">
-      <span id="navUserName" class="text-sm font-medium text-slate-300"></span>
+    <div id="navUserArea" class="hidden items-center gap-4">
+      <a href="pos.html" target="_blank" class="text-xs text-slate-300 hover:text-white transition hidden sm:flex items-center gap-1.5">
+        <i class="fa-solid fa-cash-register"></i> Abrir POS
+      </a>
+      <span id="navUserName" class="text-sm font-medium text-slate-300 hidden sm:inline"></span>
       <button onclick="logout()" class="text-slate-400 hover:text-white transition" title="Cerrar sesión">
         <i class="fa-solid fa-right-from-bracket text-lg"></i>
       </button>
     </div>
   </nav>
 
-  <!-- ▌MAIN CONTENT ▐ -->
   <div class="flex-1 flex overflow-hidden">
-    <!-- Sidebar -->
+    <!-- SIDEBAR -->
     <div class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col shadow-sm z-10">
-      <div class="p-4">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Gestión</p>
+      <div class="p-4 space-y-1">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">Gestión</p>
         <button class="w-full flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-semibold transition">
-          <i class="fa-solid fa-building w-4 text-center"></i> Negocios (Tenants)
+          <i class="fa-solid fa-building w-4 text-center"></i> Negocios
         </button>
+        <a href="pos.html" target="_blank" class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl font-semibold transition">
+          <i class="fa-solid fa-cash-register w-4 text-center"></i> Punto de venta
+        </a>
+      </div>
+      <div class="mt-auto p-4">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Cada negocio vive en su propia colección. Los vendedores solo alcanzan la suya.
+          </p>
+        </div>
       </div>
     </div>
 
-    <!-- Dashboard -->
-    <div class="flex-1 overflow-y-auto p-6 md:p-8 relative">
-      <!-- Muro de Login para SuperAdmin -->
-      <div id="loginScreen" class="absolute inset-0 bg-slate-100 z-50 flex items-center justify-center">
+    <!-- MAIN -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+
+      <!-- LOGIN -->
+      <div id="loginScreen" class="absolute inset-0 bg-slate-100 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm border border-slate-200">
           <div class="text-center mb-6">
             <i class="fa-solid fa-shield-halved text-4xl text-indigo-600 mb-3"></i>
-            <h2 class="text-2xl font-black text-slate-800">Acceso Admin</h2>
-            <p class="text-slate-500 text-sm mt-1">Control maestro del SaaS</p>
+            <h2 class="text-2xl font-black text-slate-800">Acceso maestro</h2>
+            <p class="text-slate-500 text-sm mt-1">Control de todos tus clientes</p>
           </div>
           <div class="space-y-4">
             <input id="loginEmail" type="email" placeholder="Correo electrónico" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <input id="loginPwd" type="password" placeholder="Contraseña" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <button onclick="doLogin()" id="loginBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold transition">
-              Entrar al Panel
-            </button>
+            <input id="loginPwd" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <button onclick="doLogin()" id="loginBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-bold transition">Entrar</button>
+          </div>
+          <p class="text-center text-xs text-slate-400 mt-5">
+            ¿Eres dueño o vendedor? <a href="pos.html" class="text-indigo-600 font-semibold hover:underline">Entra al punto de venta</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- NO ES SUPERADMIN -->
+      <div id="denyScreen" class="hidden absolute inset-0 bg-slate-100 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-slate-200 text-center">
+          <i class="fa-solid fa-lock text-4xl text-rose-500 mb-3"></i>
+          <h2 class="text-xl font-black text-slate-800">Esta cuenta no es superadmin</h2>
+          <p class="text-slate-500 text-sm mt-2 leading-relaxed">
+            Para autorizarla, agrega este UID a la lista <b class="text-slate-700">SUPERADMINS</b> de index.html y a la función <b class="text-slate-700">esSuper()</b> de firestore.rules:
+          </p>
+          <div class="mt-4 bg-slate-900 text-emerald-300 font-mono text-xs px-4 py-3 rounded-xl break-all" id="denyUid"></div>
+          <button onclick="copiar(document.getElementById('denyUid').textContent,'UID copiado')" class="mt-3 text-xs font-semibold text-indigo-600 hover:underline">
+            <i class="fa-regular fa-copy mr-1"></i> Copiar UID
+          </button>
+          <div class="flex gap-2 mt-6">
+            <button onclick="location.reload()" class="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-semibold text-sm">Ya lo agregué, recargar</button>
+            <button onclick="logout()" class="px-4 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-semibold text-sm">Salir</button>
           </div>
         </div>
       </div>
 
-      <!-- Contenido del Panel -->
-      <div id="adminDashboard" class="hidden max-w-6xl mx-auto">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+      <!-- DASHBOARD -->
+      <div id="adminDashboard" class="hidden max-w-6xl mx-auto pb-10">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
-            <h1 class="text-2xl md:text-3xl font-black text-slate-800">Negocios Activos</h1>
-            <p class="text-slate-500 text-sm mt-1">Controla las suscripciones y accesos de tus clientes.</p>
+            <h1 class="text-2xl md:text-3xl font-black text-slate-800">Negocios activos</h1>
+            <p class="text-slate-500 text-sm mt-1">Cada alta crea el entorno, la base y la cuenta del dueño.</p>
           </div>
-          <button onclick="showNewBusinessModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> Registrar Cliente
+          <button onclick="showNewBusinessModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-plus"></i> Registrar cliente
           </button>
         </div>
 
-        <!-- KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <p class="text-sm font-semibold text-slate-500 mb-1">Total Clientes</p>
-            <p id="kpiTotal" class="text-3xl font-black text-slate-800">0</p>
+        <!-- KPIs -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+          <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs md:text-sm font-semibold text-slate-500 mb-1">Clientes</p>
+            <p id="kpiTotal" class="text-2xl md:text-3xl font-black text-slate-800">0</p>
           </div>
-          <div class="bg-white p-5 rounded-2xl border border-emerald-200 bg-emerald-50 shadow-sm">
-            <p class="text-sm font-semibold text-emerald-700 mb-1">MRR Proyectado (Mensual)</p>
-            <p id="kpiMRR" class="text-3xl font-black text-emerald-600">$0</p>
+          <div class="bg-emerald-50 p-4 md:p-5 rounded-2xl border border-emerald-200 shadow-sm">
+            <p class="text-xs md:text-sm font-semibold text-emerald-700 mb-1">Ingreso mensual</p>
+            <p id="kpiMRR" class="text-2xl md:text-3xl font-black text-emerald-600">$0</p>
           </div>
-          <div class="bg-white p-5 rounded-2xl border border-rose-200 bg-rose-50 shadow-sm">
-            <p class="text-sm font-semibold text-rose-700 mb-1">Suscripciones Suspendidas</p>
-            <p id="kpiSuspended" class="text-3xl font-black text-rose-600">0</p>
+          <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs md:text-sm font-semibold text-slate-500 mb-1">Al corriente</p>
+            <p id="kpiActivos" class="text-2xl md:text-3xl font-black text-slate-800">0</p>
+          </div>
+          <div class="bg-rose-50 p-4 md:p-5 rounded-2xl border border-rose-200 shadow-sm">
+            <p class="text-xs md:text-sm font-semibold text-rose-700 mb-1">Suspendidos</p>
+            <p id="kpiSuspended" class="text-2xl md:text-3xl font-black text-rose-600">0</p>
           </div>
         </div>
 
-        <!-- Tabla de Negocios -->
+        <!-- Filtros -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input id="searchInput" oninput="renderBusinesses()" type="text" placeholder="Buscar por negocio o correo" class="w-full border border-slate-300 rounded-xl pl-11 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <select id="filterStatus" onchange="renderBusinesses()" class="border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            <option value="">Todos los estados</option>
+            <option value="activo">Al corriente</option>
+            <option value="suspendido">Suspendidos</option>
+          </select>
+        </div>
+
+        <!-- Tabla -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm text-left">
               <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
                 <tr>
-                  <th class="px-6 py-4 font-semibold">Tenant ID / Negocio</th>
-                  <th class="px-6 py-4 font-semibold">Dueño (Admin del negocio)</th>
-                  <th class="px-6 py-4 font-semibold">Plan</th>
-                  <th class="px-6 py-4 font-semibold text-center">Estado Pago</th>
-                  <th class="px-6 py-4 font-semibold text-right">Acciones</th>
+                  <th class="px-5 py-4 font-semibold">Negocio</th>
+                  <th class="px-5 py-4 font-semibold hidden md:table-cell">Dueño</th>
+                  <th class="px-5 py-4 font-semibold hidden lg:table-cell">Plan</th>
+                  <th class="px-5 py-4 font-semibold text-center">Pago</th>
+                  <th class="px-5 py-4 font-semibold text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody id="businessesTableBody" class="divide-y divide-slate-100">
-                <tr><td colspan="5" class="text-center py-10 text-slate-400">Cargando clientes...</td></tr>
+                <tr><td colspan="5" class="text-center py-10 text-slate-400">Cargando…</td></tr>
               </tbody>
             </table>
           </div>
@@ -123,17 +177,17 @@
     </div>
   </div>
 
-  <!-- ▌MODAL NUEVO NEGOCIO ▐ -->
+  <!-- MODAL NUEVO NEGOCIO -->
   <div id="newBusinessModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-lg">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-xl font-black text-slate-800">Nuevo Cliente SaaS</h3>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between p-6 pb-4 sticky top-0 bg-white border-b border-slate-100">
+        <h3 class="text-xl font-black text-slate-800">Nuevo cliente</h3>
         <button onclick="hideNewBusinessModal()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-4">
+      <div class="p-6 pt-4 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre del Negocio (Boutique, Barbería...)</label>
-          <input id="nb_businessName" type="text" placeholder="Ej: Barbería El Jefe" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre del negocio</label>
+          <input id="nb_businessName" type="text" placeholder="Barbería El Jefe" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -141,34 +195,80 @@
             <input id="nb_planPrice" type="number" value="500" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm font-bold text-indigo-700 bg-indigo-50 focus:ring-2 focus:ring-indigo-500 outline-none">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Estado Inicial</label>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Estado inicial</label>
             <select id="nb_status" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-              <option value="activo">Pagado (Activo)</option>
-              <option value="suspendido">Moroso (Suspendido)</option>
+              <option value="activo">Pagado</option>
+              <option value="suspendido">Suspendido</option>
             </select>
           </div>
         </div>
-        <div class="border-t border-slate-200 my-4 pt-4">
-          <p class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-user-tie text-indigo-500 mr-1"></i> Cuenta del Dueño</p>
-          <div class="space-y-3">
-            <input id="nb_ownerEmail" type="email" placeholder="Correo electrónico del cliente" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <input id="nb_ownerPwd" type="text" placeholder="Contraseña temporal (Ej: Jefe1234)" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-          </div>
-          <p class="text-[11px] text-slate-400 mt-2">Se creará una cuenta de Firebase Auth automáticamente para este dueño y se vinculará a su nuevo negocio.</p>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">WhatsApp del dueño (opcional)</label>
+          <input id="nb_phone" type="tel" placeholder="7711234567" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
-        <button id="saveBusinessBtn" onclick="createBusiness()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-bold transition mt-2">
-          <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Desplegar Entorno
+
+        <div class="border-t border-slate-200 pt-4">
+          <p class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-sliders text-indigo-500 mr-1"></i> Módulos del POS</p>
+          <div class="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200" id="nb_modulos"></div>
+        </div>
+
+        <div class="border-t border-slate-200 pt-4">
+          <p class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-user-tie text-indigo-500 mr-1"></i> Cuenta del dueño</p>
+          <div class="space-y-3">
+            <input id="nb_ownerName" type="text" placeholder="Nombre del dueño" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input id="nb_ownerEmail" type="email" placeholder="correo@cliente.com" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <div class="flex gap-2">
+              <input id="nb_ownerPwd" type="text" placeholder="Contraseña temporal" class="flex-1 border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <button onclick="generarPwd()" class="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-semibold shrink-0" title="Generar">
+                <i class="fa-solid fa-dice"></i>
+              </button>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-2">Este correo queda como administrador del negocio: podrá dar de alta vendedores y productos.</p>
+        </div>
+
+        <button id="saveBusinessBtn" onclick="createBusiness()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-bold transition">
+          <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Crear negocio
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREDENCIALES -->
+  <div id="credsModal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7 text-center">
+      <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-check text-2xl text-emerald-600"></i>
+      </div>
+      <h3 class="text-xl font-black text-slate-800">Negocio creado</h3>
+      <p class="text-slate-500 text-sm mt-1 mb-5">Entrega estos accesos a tu cliente.</p>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left text-sm space-y-2" id="credsBox"></div>
+      <div class="flex gap-2 mt-5">
+        <button id="credsCopy" class="flex-1 bg-slate-900 text-white py-2.5 rounded-xl font-semibold text-sm">
+          <i class="fa-regular fa-copy mr-1"></i> Copiar
+        </button>
+        <a id="credsWA" target="_blank" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center">
+          <i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp
+        </a>
+      </div>
+      <button onclick="document.getElementById('credsModal').classList.add('hidden')" class="mt-3 text-sm text-slate-500 font-semibold">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- DRAWER DETALLE -->
+  <div id="drawer" class="hidden fixed inset-0 z-[110]">
+    <div class="absolute inset-0 bg-slate-900/50" onclick="closeDrawer()"></div>
+    <div id="drawerPanel" class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl overflow-y-auto">
+      <div id="drawerContent" class="p-6"></div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, updateDoc, onSnapshot, serverTimestamp, getCountFromServer, writeBatch, query, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // 1. Configuración de la base de datos (saas-fa00f)
+    // ─── Configuración (debe ser idéntica en pos.html) ───
     const firebaseConfig = {
       apiKey: "AIzaSyApjuFDv4F4-tHG_taxbmgBrkYrFRFlCo4",
       authDomain: "saas-fa00f.firebaseapp.com",
@@ -179,234 +279,482 @@
       measurementId: "G-C2V3JD3DXF"
     };
 
+    // Admin god. Debe coincidir con la funcion esSuper() de firestore.rules.
+    // Esta lista solo decide que se dibuja; el permiso real lo dan las reglas.
+    const SUPERADMINS = [
+      "lNPuELoku3c9HrIPux42iwfjT503"
+    ];
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Cada uno enciende o apaga una pestaña del POS.
+    // Métricas, Productos, Vendedores e Historial van siempre incluidos.
+    const MODULOS = [
+      { id: 'inventario', label: 'Entradas de inventario y caducidades', def: true },
+      { id: 'gastos',     label: 'Registro de gastos',                   def: true },
+      { id: 'turnos',     label: 'Turnos y cortes de caja',              def: true },
+      { id: 'sucursales', label: 'Varias sucursales',                    def: true },
+      { id: 'recargas',   label: 'Recargas celulares',                   def: true },
+      { id: 'hardware',   label: 'Impresora y escáner por Bluetooth',    def: true }
+    ];
+
     let businesses = [];
-    let unsubBusinesses = null;
+    let unsub = null;
 
-    // 2. Control de Sesión del Super Admin
-    onAuthStateChanged(auth, (user) => {
-      const loginScreen = document.getElementById('loginScreen');
-      const adminDashboard = document.getElementById('adminDashboard');
-      const userArea = document.getElementById('navUserArea');
+    // ─── Sesión ───
+    onAuthStateChanged(auth, async (user) => {
+      const login = document.getElementById('loginScreen');
+      const deny = document.getElementById('denyScreen');
+      const dash = document.getElementById('adminDashboard');
+      const area = document.getElementById('navUserArea');
 
-      if (user) {
-        // En un sistema de producción, aquí verificarías si user.uid es realmente tu UID de SuperAdmin
-        loginScreen.classList.add('hidden');
-        adminDashboard.classList.remove('hidden');
-        userArea.classList.remove('hidden');
-        userArea.classList.add('flex');
-        document.getElementById('navUserName').textContent = user.email;
-        
-        loadBusinesses();
-      } else {
-        loginScreen.classList.remove('hidden');
-        adminDashboard.classList.add('hidden');
-        userArea.classList.add('hidden');
-        userArea.classList.remove('flex');
-        if(unsubBusinesses) unsubBusinesses();
+      if (!user) {
+        login.classList.remove('hidden');
+        deny.classList.add('hidden');
+        dash.classList.add('hidden');
+        area.classList.add('hidden'); area.classList.remove('flex');
+        if (unsub) { unsub(); unsub = null; }
+        return;
       }
+
+      // Verificar que sea superadmin
+      if (!SUPERADMINS.includes(user.uid)) {
+        login.classList.add('hidden');
+        dash.classList.add('hidden');
+        deny.classList.remove('hidden');
+        document.getElementById('denyUid').textContent = user.uid;
+        return;
+      }
+
+      login.classList.add('hidden');
+      deny.classList.add('hidden');
+      dash.classList.remove('hidden');
+      area.classList.remove('hidden'); area.classList.add('flex');
+      document.getElementById('navUserName').textContent = user.email;
+      loadBusinesses();
     });
 
     window.doLogin = async () => {
-      const e = document.getElementById('loginEmail').value;
+      const e = document.getElementById('loginEmail').value.trim();
       const p = document.getElementById('loginPwd').value;
       const btn = document.getElementById('loginBtn');
-      if(!e || !p) { showToast("Ingresa credenciales", "error"); return; }
-      
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando...';
+      if (!e || !p) { showToast("Escribe correo y contraseña", "warning"); return; }
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando…';
       try {
         await signInWithEmailAndPassword(auth, e, p);
-        showToast("Acceso concedido", "success");
-      } catch (error) {
-        showToast("Error de acceso: " + error.message, "error");
+      } catch (err) {
+        showToast(traducirAuth(err.code || err.message), "error");
       } finally {
-        btn.innerHTML = 'Entrar al Panel';
+        btn.disabled = false;
+        btn.innerHTML = 'Entrar';
       }
     };
 
-    window.logout = async () => await signOut(auth);
+    window.logout = async () => { await signOut(auth); location.reload(); };
 
-    // 3. Cargar Negocios en Tiempo Real
+    // ─── Lista en vivo ───
     function loadBusinesses() {
-      const negociosRef = collection(db, "negocios");
-      unsubBusinesses = onSnapshot(negociosRef, (snapshot) => {
-        businesses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (unsub) unsub();
+      unsub = onSnapshot(collection(db, "negocios"), (snap) => {
+        businesses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        businesses.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
         renderBusinesses();
-      }, (error) => {
-        console.error("Error cargando negocios: ", error);
-        showToast("Error de permisos al leer negocios", "error");
+      }, (err) => {
+        console.error(err);
+        showToast("No se pudo leer la lista. Revisa las reglas de Firestore.", "error");
       });
     }
 
-    function renderBusinesses() {
+    window.renderBusinesses = () => {
       const tbody = document.getElementById('businessesTableBody');
-      let activeCount = 0;
-      let suspendedCount = 0;
-      let mrr = 0;
+      const q = (document.getElementById('searchInput').value || '').toLowerCase();
+      const f = document.getElementById('filterStatus').value;
 
-      if (!businesses.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-400">No tienes clientes registrados aún.</td></tr>';
-      } else {
-        tbody.innerHTML = businesses.map(b => {
-          const isActive = b.status_pago === 'activo';
-          if(isActive) {
-            activeCount++;
-            mrr += parseFloat(b.mensualidad || 0);
-          } else {
-            suspendedCount++;
-          }
+      let activos = 0, suspendidos = 0, mrr = 0;
+      businesses.forEach(b => {
+        if (b.status_pago === 'activo') { activos++; mrr += parseFloat(b.mensualidad || 0); }
+        else suspendidos++;
+      });
+      document.getElementById('kpiTotal').textContent = businesses.length;
+      document.getElementById('kpiActivos').textContent = activos;
+      document.getElementById('kpiSuspended').textContent = suspendidos;
+      document.getElementById('kpiMRR').textContent = '$' + mrr.toLocaleString('es-MX');
 
-          const statusBadge = isActive 
-            ? `<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-check mr-1"></i> Activo</span>`
-            : `<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-lock mr-1"></i> Suspendido</span>`;
+      const lista = businesses.filter(b => {
+        const texto = ((b.nombre || '') + ' ' + (b.ownerEmail || '') + ' ' + b.id).toLowerCase();
+        return texto.includes(q) && (!f || b.status_pago === f);
+      });
 
-          return `
-            <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
-              <td class="px-6 py-4">
-                <p class="font-bold text-slate-800">${b.nombre}</p>
-                <p class="text-[10px] text-slate-400 font-mono mt-0.5">${b.id}</p>
-              </td>
-              <td class="px-6 py-4 text-sm text-slate-600">${b.ownerEmail}</td>
-              <td class="px-6 py-4 text-sm font-semibold text-indigo-600">$${b.mensualidad} MXN</td>
-              <td class="px-6 py-4 text-center">${statusBadge}</td>
-              <td class="px-6 py-4 text-right">
-                <button onclick="togglePaymentStatus('${b.id}', '${b.status_pago}')" class="text-sm px-3 py-1.5 rounded-lg font-semibold transition ${isActive ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'}">
-                  ${isActive ? 'Suspender' : 'Reactivar'}
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-slate-400">' +
+          (businesses.length ? 'Ningún negocio coincide con la búsqueda.' : 'Aún no registras clientes. Empieza con el botón de arriba.') +
+          '</td></tr>';
+        return;
       }
 
-      // Actualizar KPIs
-      document.getElementById('kpiTotal').textContent = businesses.length;
-      document.getElementById('kpiSuspended').textContent = suspendedCount;
-      document.getElementById('kpiMRR').textContent = `$${mrr.toLocaleString('es-MX')}`;
-    }
+      tbody.innerHTML = lista.map(b => {
+        const activo = b.status_pago === 'activo';
+        const badge = activo
+          ? '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">Al corriente</span>'
+          : '<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold">Suspendido</span>';
+        return `
+          <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="openDrawer('${b.id}')">
+            <td class="px-5 py-4">
+              <p class="font-bold text-slate-800">${esc(b.nombre)}</p>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">${b.id}</p>
+              <p class="text-xs text-slate-500 md:hidden mt-1">${esc(b.ownerEmail || '')}</p>
+            </td>
+            <td class="px-5 py-4 text-slate-600 hidden md:table-cell">${esc(b.ownerEmail || '')}</td>
+            <td class="px-5 py-4 font-semibold text-indigo-600 hidden lg:table-cell">$${Number(b.mensualidad || 0).toLocaleString('es-MX')}</td>
+            <td class="px-5 py-4 text-center">${badge}</td>
+            <td class="px-5 py-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+              <button onclick="togglePago('${b.id}','${b.status_pago}')" class="text-xs px-3 py-1.5 rounded-lg font-semibold transition ${activo ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'}">
+                ${activo ? 'Suspender' : 'Reactivar'}
+              </button>
+              <button onclick="openDrawer('${b.id}')" class="ml-1 text-xs px-3 py-1.5 rounded-lg font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700">Ver</button>
+            </td>
+          </tr>`;
+      }).join('');
+    };
 
-    // 4. Crear Negocio (Tenant) y Usuario Dueño vía REST API
+    // ─── Modal alta ───
     window.showNewBusinessModal = () => {
-      document.getElementById('nb_businessName').value = '';
-      document.getElementById('nb_ownerEmail').value = '';
-      document.getElementById('nb_ownerPwd').value = '';
+      ['nb_businessName','nb_ownerEmail','nb_ownerPwd','nb_ownerName','nb_phone'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('nb_planPrice').value = 500;
+      document.getElementById('nb_modulos').innerHTML = MODULOS.map(m => `
+        <label class="flex items-center justify-between gap-3 cursor-pointer select-none">
+          <span class="text-sm font-medium text-slate-700">${m.label}</span>
+          <span class="relative inline-block w-10 h-6 shrink-0">
+            <input id="mod_${m.id}" type="checkbox" ${m.def ? 'checked' : ''} class="peer sr-only">
+            <span class="absolute inset-0 bg-slate-300 peer-checked:bg-indigo-600 rounded-full transition"></span>
+            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition peer-checked:translate-x-4"></span>
+          </span>
+        </label>`).join('');
+      generarPwd();
       document.getElementById('newBusinessModal').classList.remove('hidden');
-    }
-    
+    };
     window.hideNewBusinessModal = () => document.getElementById('newBusinessModal').classList.add('hidden');
 
+    window.generarPwd = () => {
+      const letras = 'abcdefghijkmnpqrstuvwxyz';
+      const base = letras[Math.floor(Math.random()*24)].toUpperCase() + Array.from({length:5},()=>letras[Math.floor(Math.random()*24)]).join('');
+      document.getElementById('nb_ownerPwd').value = base + Math.floor(1000 + Math.random()*9000);
+    };
+
     window.createBusiness = async () => {
-      const bName = document.getElementById('nb_businessName').value.trim();
-      const mensualidad = document.getElementById('nb_planPrice').value;
+      const nombre = document.getElementById('nb_businessName').value.trim();
+      const mensualidad = Number(document.getElementById('nb_planPrice').value || 0);
       const status = document.getElementById('nb_status').value;
-      const email = document.getElementById('nb_ownerEmail').value.trim();
+      const telefono = document.getElementById('nb_phone').value.replace(/\D/g,'');
+      const ownerName = document.getElementById('nb_ownerName').value.trim();
+      const email = document.getElementById('nb_ownerEmail').value.trim().toLowerCase();
       const pwd = document.getElementById('nb_ownerPwd').value;
       const btn = document.getElementById('saveBusinessBtn');
 
-      if(!bName || !email || !pwd) { showToast("Completa todos los campos", "warning"); return; }
-      if(pwd.length < 6) { showToast("La contraseña debe tener al menos 6 caracteres", "warning"); return; }
+      if (!nombre || !email || !pwd) { showToast("Falta nombre, correo o contraseña", "warning"); return; }
+      if (pwd.length < 6) { showToast("La contraseña necesita 6 caracteres mínimo", "warning"); return; }
+
+      const modulos = {};
+      MODULOS.forEach(m => modulos[m.id] = document.getElementById('mod_' + m.id).checked);
 
       btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Desplegando Entorno...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Creando entorno…';
 
       try {
-        // A. Crear cuenta en Firebase Auth usando REST API (Evita que el SuperAdmin se desloguee)
-        const r1 = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({email: email, password: pwd, returnSecureToken:true})
+        // 1. Cuenta de Auth vía REST: no rompe tu sesión de superadmin
+        const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pwd, returnSecureToken: false })
         });
-        const d1 = await r1.json();
-        if(d1.error) throw new Error(d1.error.message);
-        
-        const ownerUid = d1.localId; // El UID del nuevo dueño
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        const ownerUid = d.localId;
 
-        // B. Generar un Tenant ID amigable pero único (Ej: barberia_eljefe_xyz)
-        const safeName = bName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').substring(0, 15);
-        const randomId = Math.random().toString(36).substring(2, 6);
-        const tenantId = `tenant_${safeName}_${randomId}`;
+        // 2. Identificador del negocio
+        const safe = nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').substring(0,18);
+        const tenantId = `${safe || 'negocio'}_${Math.random().toString(36).substring(2,6)}`;
 
-        // C. Crear el documento del negocio en la colección raíz
-        const negocioRef = doc(db, "negocios", tenantId);
-        await setDoc(negocioRef, {
-          nombre: bName,
-          mensualidad: Number(mensualidad),
-          status_pago: status,
-          ownerUid: ownerUid,
-          ownerEmail: email,
+        // 3. Documento del negocio
+        await setDoc(doc(db, "negocios", tenantId), {
+          nombre, mensualidad, status_pago: status,
+          ownerUid, ownerEmail: email, ownerNombre: ownerName || email.split('@')[0],
+          telefono,
+          configuracion: { tipo_pos: "tienda", moneda: "MXN", iva: 0, ticket_pie: "¡Gracias por su compra!", modulos },
           createdAt: serverTimestamp()
         });
 
-        // D. Registrar el rol y pertenencia del dueño en "usuarios_globales"
-        const globalUserRef = doc(db, "usuarios_globales", ownerUid);
-        await setDoc(globalUserRef, {
-          email: email,
-          tenantId: tenantId,
-          rol: "owner", // El dueño tiene acceso al panel de control de su propio negocio
+        // 4. Sucursal inicial: sin al menos una, el dueño no puede crear vendedores
+        await setDoc(doc(db, "negocios", tenantId, "branches", "principal"), {
+          name: "Sucursal principal",
+          address: "",
           createdAt: serverTimestamp()
         });
 
-        // E. (Opcional) Inicializar las colecciones del tenant para que no estén vacías
-        // Podrías crear un producto de prueba o una categoría por defecto aquí.
+        // 5. El correo registrado queda como ADMIN, dentro del negocio.
+        //    No hay directorio global: su ficha vive aquí y solo aquí.
+        //    El campo uid es lo que permite hallarla al iniciar sesión.
+        await setDoc(doc(db, "negocios", tenantId, "users", ownerUid), {
+          uid: ownerUid,
+          name: ownerName || email.split('@')[0],
+          email,
+          role: "owner",
+          active: true,
+          branchId: "principal",
+          branchName: "Sucursal principal",
+          createdAt: serverTimestamp()
+        });
 
         hideNewBusinessModal();
-        showToast("Entorno creado y dueño registrado con éxito", "success");
-
-      } catch (error) {
-        console.error(error);
-        const errMsgs = {
-          'EMAIL_EXISTS': 'El correo ya está en uso por otro negocio.',
-          'INVALID_EMAIL': 'El correo tiene formato inválido.'
-        };
-        showToast(errMsgs[error.message] || "Error: " + error.message, "error");
+        mostrarCredenciales(nombre, email, pwd, telefono);
+      } catch (err) {
+        console.error(err);
+        showToast(traducirAuth(err.message), "error");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Desplegar Entorno';
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Crear negocio';
       }
     };
 
-    // 5. Suspender / Reactivar Servicio (Botón de Acción)
-    window.togglePaymentStatus = async (tenantId, currentStatus) => {
-      const newStatus = currentStatus === 'activo' ? 'suspendido' : 'activo';
-      const action = newStatus === 'suspendido' ? 'suspender' : 'reactivar';
-      
-      if(!confirm(`¿Estás seguro de que deseas ${action} el servicio a este negocio?`)) return;
+    function mostrarCredenciales(negocio, email, pwd, telefono) {
+      const url = location.href.replace(/index\.html.*$/, '') + 'pos.html';
+      const texto = `Acceso a tu punto de venta — ${negocio}\n\nLiga: ${url}\nUsuario: ${email}\nContraseña: ${pwd}\n\nCambia la contraseña al entrar.`;
+      document.getElementById('credsBox').innerHTML = `
+        <div><span class="text-slate-400 text-xs">Negocio</span><p class="font-bold text-slate-800">${esc(negocio)}</p></div>
+        <div><span class="text-slate-400 text-xs">Usuario</span><p class="font-mono text-slate-800 break-all">${esc(email)}</p></div>
+        <div><span class="text-slate-400 text-xs">Contraseña</span><p class="font-mono text-slate-800">${esc(pwd)}</p></div>
+        <div><span class="text-slate-400 text-xs">Liga</span><p class="font-mono text-indigo-600 text-xs break-all">${esc(url)}</p></div>`;
+      document.getElementById('credsCopy').onclick = () => copiar(texto, 'Accesos copiados');
+      const wa = document.getElementById('credsWA');
+      wa.href = telefono
+        ? `https://wa.me/52${telefono}?text=${encodeURIComponent(texto)}`
+        : `https://wa.me/?text=${encodeURIComponent(texto)}`;
+      document.getElementById('credsModal').classList.remove('hidden');
+    }
 
+    // ─── Suspender / reactivar ───
+    window.togglePago = async (tid, actual) => {
+      const nuevo = actual === 'activo' ? 'suspendido' : 'activo';
+      const verbo = nuevo === 'suspendido' ? 'suspender' : 'reactivar';
+      if (!confirm(`¿${verbo.charAt(0).toUpperCase() + verbo.slice(1)} el servicio de este negocio?`)) return;
       try {
-        const negocioRef = doc(db, "negocios", tenantId);
-        await setDoc(negocioRef, { status_pago: newStatus }, { merge: true });
-        showToast(`Servicio ${newStatus} correctamente.`, "success");
-      } catch (error) {
-        showToast("Error al actualizar el estado.", "error");
-      }
+        await updateDoc(doc(db, "negocios", tid), { status_pago: nuevo, updatedAt: serverTimestamp() });
+        showToast(nuevo === 'activo' ? 'Servicio reactivado' : 'Servicio suspendido', "success");
+        if (document.getElementById('drawer').dataset.tid === tid) openDrawer(tid);
+      } catch (e) { showToast("No se pudo cambiar el estado", "error"); }
     };
 
-    // Utilidad de Toast
+    // ─── Drawer de detalle ───
+    window.openDrawer = async (tid) => {
+      const b = businesses.find(x => x.id === tid);
+      if (!b) return;
+      const d = document.getElementById('drawer');
+      d.dataset.tid = tid;
+      d.classList.remove('hidden');
+      requestAnimationFrame(() => d.classList.add('drawer-open'));
+
+      const mods = (b.configuracion && b.configuracion.modulos) || {};
+      const activo = b.status_pago === 'activo';
+
+      document.getElementById('drawerContent').innerHTML = `
+        <div class="flex items-start justify-between mb-6">
+          <div>
+            <h3 class="text-xl font-black text-slate-800">${esc(b.nombre)}</h3>
+            <p class="text-xs font-mono text-slate-400 mt-1">${tid}</p>
+          </div>
+          <button onclick="closeDrawer()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-6" id="drawerStats">
+          ${['Productos','Ventas','Usuarios'].map(l => `
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+              <p class="text-lg font-black text-slate-800">…</p>
+              <p class="text-[11px] text-slate-500">${l}</p>
+            </div>`).join('')}
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre</label>
+            <input id="ed_nombre" value="${esc(b.nombre)}" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Mensualidad</label>
+              <input id="ed_precio" type="number" value="${Number(b.mensualidad||0)}" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">WhatsApp</label>
+              <input id="ed_tel" value="${esc(b.telefono||'')}" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Módulos</label>
+            <div class="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              ${MODULOS.map(m => `
+                <label class="flex items-center justify-between gap-3 cursor-pointer select-none">
+                  <span class="text-sm text-slate-700">${m.label}</span>
+                  <span class="relative inline-block w-10 h-6 shrink-0">
+                    <input id="ed_mod_${m.id}" type="checkbox" ${mods[m.id] ? 'checked' : ''} class="peer sr-only">
+                    <span class="absolute inset-0 bg-slate-300 peer-checked:bg-indigo-600 rounded-full transition"></span>
+                    <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition peer-checked:translate-x-4"></span>
+                  </span>
+                </label>`).join('')}
+            </div>
+          </div>
+          <button onclick="guardarNegocio('${tid}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm">Guardar cambios</button>
+        </div>
+
+        <div class="mt-7 pt-6 border-t border-slate-200 space-y-2">
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Dueño</p>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <p class="text-sm font-semibold text-slate-800">${esc(b.ownerNombre || '')}</p>
+            <p class="text-xs font-mono text-slate-500 break-all">${esc(b.ownerEmail||'')}</p>
+          </div>
+          <button onclick="resetPwd('${esc(b.ownerEmail||'')}')" class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-2.5 rounded-xl font-semibold text-sm">
+            <i class="fa-solid fa-key mr-1"></i> Enviar restablecer contraseña
+          </button>
+          <button onclick="togglePago('${tid}','${b.status_pago}')" class="w-full ${activo ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'} border py-2.5 rounded-xl font-semibold text-sm">
+            <i class="fa-solid ${activo ? 'fa-pause' : 'fa-play'} mr-1"></i> ${activo ? 'Suspender servicio' : 'Reactivar servicio'}
+          </button>
+        </div>
+
+        <div class="mt-7 pt-6 border-t border-rose-100">
+          <button onclick="borrarNegocio('${tid}')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-2.5 rounded-xl font-semibold text-sm">
+            <i class="fa-solid fa-trash mr-1"></i> Eliminar negocio y sus datos
+          </button>
+          <p class="text-[11px] text-slate-400 mt-2 text-center">La cuenta de correo se borra aparte, desde Firebase Authentication.</p>
+        </div>`;
+
+      cargarStats(tid);
+    };
+
+    window.closeDrawer = () => {
+      const d = document.getElementById('drawer');
+      d.classList.remove('drawer-open');
+      setTimeout(() => d.classList.add('hidden'), 280);
+    };
+
+    async function cargarStats(tid) {
+      try {
+        const nombres = ['products','sales','users'];
+        const counts = await Promise.all(nombres.map(async n => {
+          try { const s = await getCountFromServer(collection(db, "negocios", tid, n)); return s.data().count; }
+          catch { return 0; }
+        }));
+        const cont = document.getElementById('drawerStats');
+        if (!cont) return;
+        const labels = ['Productos','Ventas','Vendedores'];
+        cont.innerHTML = counts.map((c,i) => `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+            <p class="text-lg font-black text-slate-800">${c}</p>
+            <p class="text-[11px] text-slate-500">${labels[i]}</p>
+          </div>`).join('');
+      } catch (e) { /* silencioso */ }
+    }
+
+    window.guardarNegocio = async (tid) => {
+      const modulos = {};
+      MODULOS.forEach(m => modulos[m.id] = document.getElementById('ed_mod_' + m.id).checked);
+      try {
+        await updateDoc(doc(db, "negocios", tid), {
+          nombre: document.getElementById('ed_nombre').value.trim(),
+          mensualidad: Number(document.getElementById('ed_precio').value || 0),
+          telefono: document.getElementById('ed_tel').value.replace(/\D/g,''),
+          'configuracion.modulos': modulos,
+          updatedAt: serverTimestamp()
+        });
+        showToast("Cambios guardados", "success");
+      } catch (e) { console.error(e); showToast("No se pudieron guardar los cambios", "error"); }
+    };
+
+    window.resetPwd = async (email) => {
+      if (!email) return;
+      try {
+        const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseConfig.apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestType: 'PASSWORD_RESET', email })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        showToast("Correo de restablecimiento enviado", "success");
+      } catch (e) { showToast(traducirAuth(e.message), "error"); }
+    };
+
+    window.borrarNegocio = async (tid, nombre) => {
+      if (prompt(`Escribe ELIMINAR para borrar "${nombre}" y todos sus datos.`) !== 'ELIMINAR') return;
+      showToast("Borrando datos…", "info");
+      try {
+        const subs = ['products','sales','users','shifts','expenses',
+                      'terminals','branches','rechargeCarriers','inventoryEntries'];
+        for (const s of subs) {
+          let quedan = true;
+          while (quedan) {
+            const snap = await getDocs(query(collection(db, "negocios", tid, s), limit(400)));
+            if (snap.empty) { quedan = false; break; }
+            const batch = writeBatch(db);
+            snap.docs.forEach(dd => batch.delete(dd.ref));
+            await batch.commit();
+            quedan = snap.size === 400;
+          }
+        }
+        // Al borrar la subcolección users desaparece el acceso de todos:
+        // sin ficha dentro de un negocio, nadie puede entrar al POS.
+        await deleteDoc(doc(db, "negocios", tid));
+        closeDrawer();
+        showToast("Negocio eliminado", "success");
+      } catch (e) { console.error(e); showToast("No se pudo eliminar por completo", "error"); }
+    };
+
+    // ─── Utilidades ───
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    window.esc = esc;
+
+    window.copiar = async (texto, msg) => {
+      try { await navigator.clipboard.writeText(texto); showToast(msg || "Copiado", "success"); }
+      catch { showToast("Copia manual: " + texto, "info"); }
+    };
+
+    function traducirAuth(code) {
+      const m = {
+        'EMAIL_EXISTS': 'Ese correo ya pertenece a otra cuenta.',
+        'INVALID_EMAIL': 'El correo tiene un formato inválido.',
+        'WEAK_PASSWORD : Password should be at least 6 characters': 'La contraseña necesita 6 caracteres mínimo.',
+        'EMAIL_NOT_FOUND': 'Ese correo no está registrado.',
+        'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+        'auth/invalid-email': 'El correo tiene un formato inválido.',
+        'auth/user-not-found': 'Ese correo no está registrado.',
+        'auth/wrong-password': 'Contraseña incorrecta.',
+        'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos.',
+        'auth/network-request-failed': 'Sin conexión con el servidor.'
+      };
+      return m[code] || ('Error: ' + code);
+    }
+
     let toastTimer;
-    window.showToast = (msg, type='info') => {
+    window.showToast = (msg, type = 'info') => {
       const t = document.getElementById('toast');
       const inner = document.getElementById('toastInner');
       const icon = document.getElementById('toastIcon');
       document.getElementById('toastMsg').textContent = msg;
-      
-      const config = {
-        success: { cls: 'fa-solid fa-circle-check text-emerald-500', border: 'border-emerald-200' },
-        error: { cls: 'fa-solid fa-circle-xmark text-rose-500', border: 'border-rose-200' },
-        warning: { cls: 'fa-solid fa-triangle-exclamation text-amber-500', border: 'border-amber-200' },
-        info: { cls: 'fa-solid fa-circle-info text-indigo-500', border: 'border-indigo-200' }
-      };
-      
-      icon.className = `${config[type].cls} text-lg w-5 text-center shrink-0`;
-      inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg bg-white border-l-4 ${config[type].border}`;
-      
+      const cfg = {
+        success: { cls: 'fa-solid fa-circle-check text-emerald-500', border: 'border-emerald-400' },
+        error:   { cls: 'fa-solid fa-circle-xmark text-rose-500',    border: 'border-rose-400' },
+        warning: { cls: 'fa-solid fa-triangle-exclamation text-amber-500', border: 'border-amber-400' },
+        info:    { cls: 'fa-solid fa-circle-info text-indigo-500',   border: 'border-indigo-400' }
+      }[type];
+      icon.className = `${cfg.cls} text-lg w-5 text-center shrink-0`;
+      inner.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg bg-white border-l-4 ${cfg.border}`;
       t.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
     };
-
   </script>
 </body>
 </html>
