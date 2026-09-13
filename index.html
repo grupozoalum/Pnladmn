@@ -581,6 +581,7 @@
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre</label>
             <input id="ed_nombre" value="${esc(b.nombre)}" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <p class="text-[11px] text-slate-400 mt-1">Es el rótulo que sale en los tickets, la impresora y la pantalla al cliente.</p>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -591,6 +592,11 @@
               <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">WhatsApp</label>
               <input id="ed_tel" value="${esc(b.telefono||'')}" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Pie del ticket</label>
+            <input id="ed_pie" value="${esc((b.configuracion && b.configuracion.ticket_pie) || '¡Gracias por su compra!')}" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <p class="text-[11px] text-slate-400 mt-1">Aparece al final de cada ticket, impreso y por WhatsApp.</p>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Módulos</label>
@@ -665,6 +671,7 @@
           nombre: document.getElementById('ed_nombre').value.trim(),
           mensualidad: Number(document.getElementById('ed_precio').value || 0),
           telefono: document.getElementById('ed_tel').value.replace(/\D/g,''),
+          'configuracion.ticket_pie': document.getElementById('ed_pie').value.trim() || '¡Gracias por su compra!',
           'configuracion.modulos': modulos,
           updatedAt: serverTimestamp()
         });
