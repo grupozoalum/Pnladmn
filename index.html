@@ -189,6 +189,11 @@
           <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Nombre del negocio</label>
           <input id="nb_businessName" type="text" placeholder="Barbería El Jefe" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Giro del negocio</label>
+          <div id="nb_tipo" class="grid grid-cols-2 gap-2"></div>
+          <p class="text-[11px] text-slate-400 mt-1">Define qué punto de venta abre su liga y qué módulos puede activar.</p>
+        </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Mensualidad (MXN)</label>
@@ -270,14 +275,14 @@
 
     // ─── Configuración (debe ser idéntica en pos.html) ───
     const firebaseConfig = {
-      apiKey: "AIzaSyApjuFDv4F4-tHG_taxbmgBrkYrFRFlCo4",
-      authDomain: "saas-fa00f.firebaseapp.com",
-      projectId: "saas-fa00f",
-      storageBucket: "saas-fa00f.firebasestorage.app",
-      messagingSenderId: "783638109709",
-      appId: "1:783638109709:web:d0cf49849771e48a227f44",
-      measurementId: "G-C2V3JD3DXF"
-    };
+  apiKey: "AIzaSyCNWsowcsixY7I4JDuOzoQfu3Jdx9UFGNQ",
+  authDomain: "doc-con-ia.firebaseapp.com",
+  projectId: "doc-con-ia",
+  storageBucket: "doc-con-ia.firebasestorage.app",
+  messagingSenderId: "952895131866",
+  appId: "1:952895131866:web:3b456da32f0567891295e3",
+  measurementId: "G-DGX8B7G5XY"
+};
 
     // Admin god. Debe coincidir con la funcion esSuper() de firestore.rules.
     // Esta lista solo decide que se dibuja; el permiso real lo dan las reglas.
@@ -291,13 +296,31 @@
 
     // Cada uno enciende o apaga una pestaña del POS.
     // Métricas, Productos, Vendedores e Historial van siempre incluidos.
+    // Cada negocio usa uno de los dos puntos de venta.
+    const TIPOS = {
+      tienda:   { label: 'Tienda / abarrotes', archivo: 'pos.html',      icono: 'fa-store' },
+      barberia: { label: 'Barbería / estética', archivo: 'barberia.html', icono: 'fa-scissors' }
+    };
+    const archivoDe = t => (TIPOS[t] || TIPOS.tienda).archivo;
+
+    // 'tipos' define en qué giro tiene sentido cada módulo.
     const MODULOS = [
-      { id: 'inventario', label: 'Entradas de inventario y caducidades', def: true },
-      { id: 'gastos',     label: 'Registro de gastos',                   def: true },
-      { id: 'turnos',     label: 'Turnos y cortes de caja',              def: true },
-      { id: 'sucursales', label: 'Varias sucursales',                    def: true },
-      { id: 'recargas',   label: 'Recargas celulares',                   def: true },
-      { id: 'hardware',   label: 'Impresora y escáner por Bluetooth',    def: true }
+      { id: 'inventario', label: 'Entradas de inventario y caducidades', def: true, tipos: ['tienda'] },
+      { id: 'recargas',   label: 'Recargas celulares',                   def: true, tipos: ['tienda'] },
+      { id: 'hardware',   label: 'Impresora y escáner por Bluetooth',    def: true, tipos: ['tienda'] },
+      { id: 'gastos',     label: 'Registro de gastos',                   def: true, tipos: ['tienda','barberia'] },
+      { id: 'turnos',     label: 'Turnos y cortes de caja',              def: true, tipos: ['tienda','barberia'] },
+      { id: 'sucursales', label: 'Varias sucursales',                    def: true, tipos: ['tienda','barberia'] }
+    ];
+    const modulosDe = tipo => MODULOS.filter(m => m.tipos.includes(tipo));
+
+    // Servicios con los que arranca una barbería, para que no empiece en blanco
+    const SERVICIOS_SEMILLA = [
+      { name: 'Corte de caballero', price: 150, durationMin: 30, commissionPct: 40 },
+      { name: 'Corte + barba',      price: 230, durationMin: 45, commissionPct: 40 },
+      { name: 'Arreglo de barba',   price: 100, durationMin: 20, commissionPct: 40 },
+      { name: 'Corte de niño',      price: 120, durationMin: 25, commissionPct: 40 },
+      { name: 'Ceja',               price:  50, durationMin: 10, commissionPct: 40 }
     ];
 
     let businesses = [];
@@ -405,6 +428,10 @@
             <td class="px-5 py-4">
               <p class="font-bold text-slate-800">${esc(b.nombre)}</p>
               <p class="text-[10px] text-slate-400 font-mono mt-0.5">${b.id}</p>
+              <span class="inline-flex items-center gap-1 text-[10px] text-slate-500 mt-1">
+                <i class="fa-solid ${(TIPOS[(b.configuracion && b.configuracion.tipo_pos) || 'tienda'] || TIPOS.tienda).icono}"></i>
+                ${(TIPOS[(b.configuracion && b.configuracion.tipo_pos) || 'tienda'] || TIPOS.tienda).label}
+              </span>
               <p class="text-xs text-slate-500 md:hidden mt-1">${esc(b.ownerEmail || '')}</p>
             </td>
             <td class="px-5 py-4 text-slate-600 hidden md:table-cell">${esc(b.ownerEmail || '')}</td>
@@ -421,10 +448,20 @@
     };
 
     // ─── Modal alta ───
-    window.showNewBusinessModal = () => {
-      ['nb_businessName','nb_ownerEmail','nb_ownerPwd','nb_ownerName','nb_phone'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('nb_planPrice').value = 500;
-      document.getElementById('nb_modulos').innerHTML = MODULOS.map(m => `
+    let tipoNuevo = 'tienda';
+
+    window.elegirTipo = (t) => { tipoNuevo = t; pintarSelectorTipo(); pintarModulosNuevos(); };
+
+    function pintarSelectorTipo() {
+      document.getElementById('nb_tipo').innerHTML = Object.entries(TIPOS).map(([id, t]) => `
+        <button onclick="elegirTipo('${id}')" class="border-2 rounded-xl py-3 px-2 text-sm font-bold flex flex-col items-center gap-1.5 transition ${tipoNuevo === id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}">
+          <i class="fa-solid ${t.icono} text-lg"></i>
+          <span class="text-xs leading-tight text-center">${t.label}</span>
+        </button>`).join('');
+    }
+
+    function pintarModulosNuevos() {
+      document.getElementById('nb_modulos').innerHTML = modulosDe(tipoNuevo).map(m => `
         <label class="flex items-center justify-between gap-3 cursor-pointer select-none">
           <span class="text-sm font-medium text-slate-700">${m.label}</span>
           <span class="relative inline-block w-10 h-6 shrink-0">
@@ -433,6 +470,14 @@
             <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition peer-checked:translate-x-4"></span>
           </span>
         </label>`).join('');
+    }
+
+    window.showNewBusinessModal = () => {
+      ['nb_businessName','nb_ownerEmail','nb_ownerPwd','nb_ownerName','nb_phone'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('nb_planPrice').value = 500;
+      tipoNuevo = 'tienda';
+      pintarSelectorTipo();
+      pintarModulosNuevos();
       generarPwd();
       document.getElementById('newBusinessModal').classList.remove('hidden');
     };
@@ -457,8 +502,12 @@
       if (!nombre || !email || !pwd) { showToast("Falta nombre, correo o contraseña", "warning"); return; }
       if (pwd.length < 6) { showToast("La contraseña necesita 6 caracteres mínimo", "warning"); return; }
 
+      // Los módulos que no aplican al giro quedan apagados explícitamente
       const modulos = {};
-      MODULOS.forEach(m => modulos[m.id] = document.getElementById('mod_' + m.id).checked);
+      MODULOS.forEach(m => {
+        const chk = document.getElementById('mod_' + m.id);
+        modulos[m.id] = chk ? chk.checked : false;
+      });
 
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Creando entorno…';
@@ -484,7 +533,12 @@
           nombre, mensualidad, status_pago: status,
           ownerUid, ownerEmail: email, ownerNombre: ownerName || email.split('@')[0],
           telefono,
-          configuracion: { tipo_pos: "tienda", moneda: "MXN", iva: 0, ticket_pie: "¡Gracias por su compra!", modulos },
+          configuracion: {
+            tipo_pos: tipoNuevo,
+            moneda: "MXN", iva: 0,
+            ticket_pie: tipoNuevo === 'barberia' ? "¡Gracias por su visita!" : "¡Gracias por su compra!",
+            modulos
+          },
           createdAt: serverTimestamp()
         });
 
@@ -494,6 +548,16 @@
           address: "",
           createdAt: serverTimestamp()
         });
+
+        // 4b. Una barbería arranca con servicios de ejemplo: nadie quiere
+        //     estrenar un POS con el catálogo vacío.
+        if (tipoNuevo === 'barberia') {
+          await Promise.all(SERVICIOS_SEMILLA.map((sv, i) =>
+            setDoc(doc(db, "negocios", tenantId, "services", "srv_" + i), {
+              ...sv, active: true, orden: i, createdAt: serverTimestamp()
+            })
+          ));
+        }
 
         // 5. El correo registrado queda como ADMIN, dentro del negocio.
         //    No hay directorio global: su ficha vive aquí y solo aquí.
@@ -506,11 +570,12 @@
           active: true,
           branchId: "principal",
           branchName: "Sucursal principal",
+          commissionPct: tipoNuevo === 'barberia' ? 0 : null,
           createdAt: serverTimestamp()
         });
 
         hideNewBusinessModal();
-        mostrarCredenciales(nombre, email, pwd, telefono);
+        mostrarCredenciales(nombre, email, pwd, telefono, tipoNuevo);
       } catch (err) {
         console.error(err);
         showToast(traducirAuth(err.message), "error");
@@ -520,8 +585,8 @@
       }
     };
 
-    function mostrarCredenciales(negocio, email, pwd, telefono) {
-      const url = location.href.replace(/index\.html.*$/, '') + 'pos.html';
+    function mostrarCredenciales(negocio, email, pwd, telefono, tipo) {
+      const url = location.href.replace(/index\.html.*$/, '') + archivoDe(tipo);
       const texto = `Acceso a tu punto de venta — ${negocio}\n\nLiga: ${url}\nUsuario: ${email}\nContraseña: ${pwd}\n\nCambia la contraseña al entrar.`;
       document.getElementById('credsBox').innerHTML = `
         <div><span class="text-slate-400 text-xs">Negocio</span><p class="font-bold text-slate-800">${esc(negocio)}</p></div>
@@ -559,12 +624,17 @@
 
       const mods = (b.configuracion && b.configuracion.modulos) || {};
       const activo = b.status_pago === 'activo';
+      const tipo = (b.configuracion && b.configuracion.tipo_pos) || 'tienda';
+      const infoTipo = TIPOS[tipo] || TIPOS.tienda;
 
       document.getElementById('drawerContent').innerHTML = `
         <div class="flex items-start justify-between mb-6">
           <div>
             <h3 class="text-xl font-black text-slate-800">${esc(b.nombre)}</h3>
             <p class="text-xs font-mono text-slate-400 mt-1">${tid}</p>
+            <span class="inline-flex items-center gap-1.5 mt-2 text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-bold">
+              <i class="fa-solid ${infoTipo.icono}"></i> ${infoTipo.label}
+            </span>
           </div>
           <button onclick="closeDrawer()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
         </div>
@@ -601,7 +671,7 @@
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Módulos</label>
             <div class="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-              ${MODULOS.map(m => `
+              ${modulosDe(tipo).map(m => `
                 <label class="flex items-center justify-between gap-3 cursor-pointer select-none">
                   <span class="text-sm text-slate-700">${m.label}</span>
                   <span class="relative inline-block w-10 h-6 shrink-0">
@@ -612,7 +682,10 @@
                 </label>`).join('')}
             </div>
           </div>
-          <button onclick="guardarNegocio('${tid}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm">Guardar cambios</button>
+          <button onclick="guardarNegocio('${tid}','${tipo}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm">Guardar cambios</button>
+          <a href="${infoTipo.archivo}" target="_blank" class="block text-center w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-2.5 rounded-xl font-semibold text-sm">
+            <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Abrir su punto de venta
+          </a>
         </div>
 
         <div class="mt-7 pt-6 border-t border-slate-200 space-y-2">
@@ -663,9 +736,13 @@
       } catch (e) { /* silencioso */ }
     }
 
-    window.guardarNegocio = async (tid) => {
+    window.guardarNegocio = async (tid, tipo) => {
       const modulos = {};
-      MODULOS.forEach(m => modulos[m.id] = document.getElementById('ed_mod_' + m.id).checked);
+      MODULOS.forEach(m => {
+        const chk = document.getElementById('ed_mod_' + m.id);
+        // Los módulos que no aplican al giro no se dibujan: quedan apagados.
+        modulos[m.id] = chk ? chk.checked : false;
+      });
       try {
         await updateDoc(doc(db, "negocios", tid), {
           nombre: document.getElementById('ed_nombre').value.trim(),
